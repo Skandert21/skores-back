@@ -27,22 +27,17 @@ function buildKeyFromServer(trackId) {
 }
 
 app.get('/api/request-key/:trackId', (req, res) => {
-    try {
-        const { trackId } = req.params;
-        
-        // Verificación de seguridad interna
-        if (!process.env.SECRET_PHRASE) {
-            console.error("ERROR: SECRET_PHRASE no configurada en Render");
-            return res.status(500).json({ error: "Configuración incompleta" });
-        }
+    const { trackId } = req.params;
+    
+    // .trim() aquí asegura que no haya saltos de línea ocultos de Render
+    const secret = process.env.SECRET_PHRASE.trim(); 
+    
+    // IMPORTANTE: Usa exactamente la misma unión que usabas en el front.
+    // Si en el front NO usabas decodeURIComponent, quítalo aquí también.
+    const data = secret + trackId; 
 
-        const base64Key = buildKeyFromServer(trackId);
-        res.json({ k: base64Key });
-
-    } catch (e) {
-        console.error("Error procesando llave:", e);
-        res.status(500).json({ error: "Error interno del servidor" });
-    }
+    const hash = crypto.createHash('sha256').update(data).digest();
+    res.json({ k: hash.slice(0, 16).toString('base64') });
 });
 
 const PORT = process.env.PORT || 10000; // Render prefiere puertos altos o dinámicos
