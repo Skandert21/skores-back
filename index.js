@@ -15,7 +15,7 @@ app.use(cors({
 app.use(express.json());
 
 // 2. Única declaración de la frase secreta
-const SECRET_PHRASE = (process.env.SECRET_PHRASE || "").trim();
+const SECRET_PHRASE = (process.env.SECRET_PHRASE || "MusicSkores2026.").trim();
 
 if (!SECRET_PHRASE) {
     console.warn("⚠️ ADVERTENCIA: SECRET_PHRASE no está definida en el entorno.");
@@ -37,25 +37,30 @@ function buildKeyFromServer(trackId) {
 }
 
 // 4. Ruta única (usando el comodín * para rutas largas)
-app.get('/api/request-key/:trackId(*)', (req, res) => {
+// El (*) es la magia que acepta todas las barras diagonales
+// El asterisco sin paréntesis captura TODO, incluyendo las barras "/"
+// El (.*) es una expresión regular que captura absolutamente todo después de la barra
+// Usamos el asterisco directo. Captura TODO lo que venga después de la barra.
+// En la versión nueva, (.*) se escribe como :path(.*) o simplemente se usa una Regex pura
+app.get(/^\/api\/request-key\/(.*)/, (req, res) => {
     try {
-        const { trackId } = req.params;
-        
-        if (!SECRET_PHRASE) {
-            return res.status(500).json({ error: "Configuración de servidor incompleta" });
+        // Al usar una Expresión Regular directa, el contenido cae en req.params[0]
+        const trackId = req.params[0];
+
+        console.log("TrackId capturado:", trackId);
+
+        if (!trackId) {
+            return res.status(400).json({ error: "No se proporcionó trackId" });
         }
 
         const key = buildKeyFromServer(trackId);
-        
-        console.log(`✅ Key generada con éxito para: ${trackId}`);
         res.json({ k: key });
 
     } catch (err) {
-        console.error("❌ Error generando key:", err);
-        res.status(500).json({ error: "Key generation failed" });
+        console.error("Error en el servidor:", err);
+        res.status(500).json({ error: "Error interno" });
     }
 });
-
 // 5. Un solo puerto y una sola escucha
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
