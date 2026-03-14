@@ -13,6 +13,36 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 */
+
+ 
+app.use(cors({
+    origin: '*', // Permite todo temporalmente para descartar fallos de Render
+    methods: ['GET'],
+    allowedHeaders: ['Content-Type']
+}));
+
+app.use(express.json());
+
+const SECRET_PHRASE = process.env.SECRET_PHRASE ? process.env.SECRET_PHRASE.trim() : "";
+
+app.get('/api/request-key/:trackId(*)', (req, res) => {
+    try {
+        // Usamos :trackId(*) para que acepte las barras '/' de tu URL
+        const trackId = req.params.trackId;
+        const data = SECRET_PHRASE + trackId;
+
+        const hash = crypto.createHash('sha256').update(data).digest();
+        const base64Key = hash.slice(0, 16).toString('base64');
+
+        console.log(`Petición para: ${trackId}`);
+        res.json({ k: base64Key });
+    } catch (e) {
+        res.status(500).json({ error: "Error en el servidor" });
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
 const SECRET_PHRASE = process.env.SECRET_PHRASE;
 
 if (!SECRET_PHRASE) {
