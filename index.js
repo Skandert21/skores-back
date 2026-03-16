@@ -16,9 +16,16 @@ app.use(express.json());
 
 const SECRET = process.env.SECRET_PHRASE || "MusicSkores2026.";
 
-app.get('/api/request-key/:trackId', (req, res) => {
 
-    try {
+app.get('/api/request-key/:trackId', (req, res) => {
+    const referer = req.headers.referer;
+    const origin = req.headers.origin;
+
+    // Solo permitimos si el referer es tu GitHub Pages
+    if (!referer || !referer.startsWith('https://skandert21.github.io')) {
+        return res.status(403).json({ error: "Acceso denegado: Solo peticiones desde el sitio oficial." });
+    }
+try {
 
         const trackId = decodeURIComponent(req.params.trackId);
 
@@ -30,19 +37,18 @@ app.get('/api/request-key/:trackId', (req, res) => {
             .digest();
 
         const key = hash.slice(0,16);
-
-        res.json({
+json({
             k: key.toString('base64')
         });
 
+        res.
     } catch(e) {
 
         res.status(500).json({error:"key generation failed"});
 
     }
-
 });
-
+ 
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
