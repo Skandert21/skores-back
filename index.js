@@ -6,9 +6,10 @@ const crypto = require('crypto');
 const app = express();
 
 app.use(cors({
-     origin: '*',
-    methods: ['GET'],
-    allowedHeaders: ['Content-Type']
+   origin: 'https://skandert21.github.io', // Tu dominio de producción
+    methods: ['GET', 'POST'], // Solo los métodos que necesitas
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200
 }));
 
 app.use(express.json());
